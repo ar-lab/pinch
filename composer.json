@@ -1,0 +1,21 @@
+{
+    "name": "ar-lab/pinch",
+    "description": "Pinch docs viewer",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "alex-ray",
+            "email": "alex-ray@land.ru"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "erusev/parsedown": "^1.7"
+    },
+    "autoload": {
+        "psr-0": {
+            "": "src/core/"
+        }
+    }
+}
