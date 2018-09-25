@@ -4,6 +4,7 @@ class Pinch
 {
 
     private $_config = array();
+
     private $_rootPath;
     private $_themesPath;
     private $_contentPath;
@@ -11,7 +12,7 @@ class Pinch
     protected $route;
     protected $file;
 
-    protected $meta;
+    protected $menu;
     protected $content;
 
     public function __construct()
@@ -23,7 +24,12 @@ class Pinch
 
     public function setConfig(array $params)
     {
-        $this->_config = $params;
+        $this->_config = array(
+            'title' => isset($params['title']) ? $params['title'] : 'Pinch',
+            'description' => isset($params['description']) ? $params['description'] : 'Documentation viewer',
+            'theme' => isset($params['theme']) ? $params['theme'] : '',
+            'template' => isset($params['template']) ? $params['template'] : 'main',
+        );
     }
 
     public function setThemesPath($path)
@@ -40,17 +46,108 @@ class Pinch
     {
         $this->parseRoure();
 
-        $this->prepareFilePath();
+        $this->file = $this->prepareFilePath();
 
         if (file_exists($this->file)) {
-            $this->meta = $this->_config['meta'];
-            $this->content = $this->loadFile();
+            $contentData = $this->loadFile();
         } else {
             header("HTTP/1.1 404 Not Found");
-            $this->content = '# 404 Not Found';
+            $contentData = '# 404 Not Found';
         }
 
+        $this->content = $this->prepareContent($contentData);
+
+        $this->buildMenu();
         $this->renderPage();
+    }
+
+    protected function buildMenu()
+    {
+        $tree = $this->getTree($this->_contentPath);
+        $this->menu = $this->getMenuItems($tree);
+    }
+
+    protected function getTree($dir)
+    {
+        $tree = array();
+
+        $files = scandir($dir);
+        if ($files !== false) {
+            foreach ($files as $file) {
+                if ($file != '.' && $file != '..') {
+                    $path = $dir . '/' . $file;
+                    if (is_dir($path)) {
+                        $tree[$file] = $this->getTree($path);
+                    } else {
+                        $tree[$file] = $path;
+                    }
+                }
+            }
+        }
+
+        return $tree;
+    }
+
+    protected function getMenuItems($tree, $depth = 1)
+    {
+        $menuItems = array();
+
+        foreach ($tree as $path) {
+            if (!is_array($path)) {
+
+                if (basename($path, '.md') === 'index') {
+                    $currentDepth = $depth - 1;
+                    $isSection = true;
+                } else {
+                    $currentDepth = $depth;
+                    $isSection = false;
+                }
+
+                $item = array(
+                    'depth' => $currentDepth,
+                    'uri' => $this->parsePageUri($path),
+                    'name' => $this->parsePageName($path),
+                );
+
+                // skup root page
+                if ($item['depth'] === 0) continue;
+
+                // skip hidden pages
+                if (substr($item['name'], 0 , 1) === '.') continue;
+
+                // add page to menu
+                if ($isSection) {
+                    array_unshift($menuItems, $item);
+                } else {
+                    array_push($menuItems, $item);
+                }
+
+            } else {
+                $nextDepth = $depth + 1;
+                $menuItems = array_merge($menuItems, $this->getMenuItems($path, $nextDepth));
+            }
+        }
+
+        return $menuItems;
+    }
+
+    protected function parsePageUri($path)
+    {
+        $itemUri = str_replace($this->_contentPath, '', $path);
+        $itemUri = str_replace('/index.md', '', $itemUri);
+        $itemUri = rtrim($itemUri, '.md');
+
+        return $itemUri;
+    }
+
+    protected function parsePageName($path)
+    {
+        $itemUri = $this->parsePageUri($path);
+        $itemUriParts = explode('/', $itemUri);
+        $itemName = array_pop($itemUriParts);
+        $itemName = str_replace('_', ' ', $itemName);
+
+        return $itemName;
     }
 
     protected function parseRoure()
@@ -71,7 +168,7 @@ class Pinch
             $requestedFile .= $fileExtension;
         }
 
-        $this->file = $requestedFile;
+        return $requestedFile;
     }
 
     protected function loadFile()
@@ -81,15 +178,18 @@ class Pinch
         return $data;
     }
 
-    protected function renderPage()
+    protected function prepareContent($data)
     {
         $parsedown = new Parsedown;
-        $content = $parsedown->text($this->content);
+        $content = $parsedown->text($data);
 
+        return $content;
+    }
+
+    protected function renderPage()
+    {
         $template = $this->getTemplatePath();
         $params = $this->getTemplateParams();
-
-        $params['content'] = $content;
 
         $view = new PinchRender($template, $params);
         $output = $view->render();
@@ -97,18 +197,38 @@ class Pinch
         echo $output;
     }
 
-    protected function getTemplatePath()
+    protected function getThemeUri()
+    {
+        $themeUri = str_replace($this->_rootPath, '', $this->getThemePath());
+
+        return $themeUri;
+    }
+
+    protected function getThemePath()
     {
         $themeName = $this->_config['theme'];
-        $templateName = $this->_config['template'];
 
-        return $this->_themesPath . '/' . $themeName . '/' . $templateName . '.phtml';
+        return $this->_themesPath . '/' . $themeName;
+    }
+
+    protected function getTemplatePath()
+    {
+        $themePath = $this->getThemePath();
+
+        $templateName = $this->_config['template'];
+        $templatePath = $themePath . '/' . $templateName . '.phtml';
+
+        return $templatePath;
     }
 
     protected function getTemplateParams()
     {
         return array(
-            'meta' => $this->meta,
+            'themeUri' => $this->getThemeUri(),
+            'siteTitle' => $this->_config['title'],
+            'siteDescription' => $this->_config['description'],
+            'page' => $this->parsePageName($this->file),
+            'menu' => $this->menu,
             'content' => $this->content,
         );
     }

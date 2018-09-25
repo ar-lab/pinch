@@ -1,0 +1,70 @@
+html, body {
+    height: 100%;
+}
+
+#header {
+    padding: 32px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+#footer {
+    padding: 14px 0;
+    border-top: 1px solid #E1E1E1;
+}
+
+#main {
+    padding: 32px 0;
+    overflow: hidden;
+}
+
+.container {
+    overflow: hidden;
+}
+
+.title h2 {
+    margin: 0;
+}
+
+.title a {
+    color: #222;
+    text-decoration: none;
+}
+
+.title p {
+    margin: 0;
+    color: #888;
+}
+
+.copyright a {
+    color: #888;
+}
+
+.copyright a:hover {
+    color: #222;
+}
+
+.sidebar {
+    width: 200px;
+    float: right;
+    padding-left: 40px;
+}
+
+.sidebar li {
+    list-style: none;
+}
+
+.sidebar a {
+    text-decoration: none;
+}
+
+.sidebar a:hover {
+    text-decoration: underline;
+}
+
+.content {
+    margin-right: 240px;
+}
+
+.content table {
+    width: 100%;
+}

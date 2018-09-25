@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <?php if (!empty($page)) : ?>
+        <title><?=$page?> - <?=$siteTitle?></title>
+    <?php else : ?>
+        <title><?=$siteTitle?></title>
+    <?php endif; ?>
+
+    <link rel="stylesheet" href="<?=$themeUri?>/css/normalize.css" type="text/css" />
+    <link rel="stylesheet" href="<?=$themeUri?>/css/skeleton.css" type="text/css" />
+    <link rel="stylesheet" href="<?=$themeUri?>/css/style.css" type="text/css" />
+
+</head>
+<body>
+
+    <div class="container">
+
+        <div id="header">
+            <div class="title">
+                <a href="/"><h2><?=$siteTitle?></h2></a>
+                <p><?=$siteDescription?></p>
+            </div>
+        </div>
+
+        <div id="main">
+            <div class="sidebar">
+                <h5>Navigation</h5>
+                <ul>
+                    <?php foreach ($menu as $key => $item) : ?>
+                        <li><a href="<?=$item['uri']?>"><?=$item['name']?></a></li>
+                        <?php if (isset($menu[$key+1]) && $menu[$key+1]['depth'] > $item['depth']) : ?>
+                            <ul>
+                        <?php endif; ?>
+                        <?php if (isset($menu[$key+1]) && $menu[$key+1]['depth'] < $item['depth']) : ?>
+                            </ul>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <div class="content">
+                <?=$content?>
+            </div>
+        </div>
+
+        <div id="footer">
+            <div class="copyright">
+                Copyright &copy; 2018 <a href="https://github.com/ar-lab" target="_blank">ar-lab</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="<?=$themeUri?>/js/script.js" type="text/javascript"></script>
+
+</body>
+</html>
